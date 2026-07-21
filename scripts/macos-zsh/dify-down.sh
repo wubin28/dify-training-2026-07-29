@@ -11,6 +11,8 @@ set -euo pipefail
 SCRIPT_DIR=${0:A:h}
 DIFY_HOME="${DIFY_HOME:-$HOME/dify-demo}"
 COMPOSE="$DIFY_HOME/docker/docker-compose.yaml"
+# 跟 dify-up.sh 用同一 project 名，否则 down 找不到 up 起的容器
+DIFY_PROJECT="${DIFY_PROJECT:-dify-demo}"
 PURGE=0
 RESTORE=""
 
@@ -30,13 +32,13 @@ if [[ -n "$RESTORE" ]]; then
   SNAP_DIR="$SCRIPT_DIR/../dify-snapshots/$RESTORE"
   [[ ! -f "$SNAP_DIR/dify.sql" ]] && { print -u2 "快照不存在: $SNAP_DIR/dify.sql"; exit 1; }
   print "=== 恢复快照: $RESTORE ==="
-  docker compose -f "$COMPOSE" up -d db
+  docker compose -p "$DIFY_PROJECT" -f "$COMPOSE" up -d db
   sleep 8
-  docker compose -f "$COMPOSE" exec -T db psql -U postgres -c 'DROP DATABASE IF EXISTS dify;' >/dev/null
-  docker compose -f "$COMPOSE" exec -T db psql -U postgres -c 'CREATE DATABASE dify;' >/dev/null
-  docker compose -f "$COMPOSE" exec -T db psql -U postgres dify < "$SNAP_DIR/dify.sql" >/dev/null
+  docker compose -p "$DIFY_PROJECT" -f "$COMPOSE" exec -T db psql -U postgres -c 'DROP DATABASE IF EXISTS dify;' >/dev/null
+  docker compose -p "$DIFY_PROJECT" -f "$COMPOSE" exec -T db psql -U postgres -c 'CREATE DATABASE dify;' >/dev/null
+  docker compose -p "$DIFY_PROJECT" -f "$COMPOSE" exec -T db psql -U postgres dify < "$SNAP_DIR/dify.sql" >/dev/null
   print "  数据库已恢复"
-  docker compose -f "$COMPOSE" up -d
+  docker compose -p "$DIFY_PROJECT" -f "$COMPOSE" up -d
   print "  服务已重起 → http://localhost"
   exit 0
 fi
@@ -46,9 +48,9 @@ if [[ $PURGE -eq 1 ]]; then
   print "   你在第 2 章建的演示知识库也会没。确定？输 yes 继续："
   read -r confirm
   [[ "$confirm" != "yes" ]] && { print "已取消"; exit 0; }
-  docker compose -f "$COMPOSE" down -v
+  docker compose -p "$DIFY_PROJECT" -f "$COMPOSE" down -v --remove-orphans
   print "已停止并清空数据卷"
 else
-  docker compose -f "$COMPOSE" down
+  docker compose -p "$DIFY_PROJECT" -f "$COMPOSE" down --remove-orphans
   print "已停止（数据保留，下次 ./dify-up.sh 直接回来）"
 fi
