@@ -1,58 +1,44 @@
-#!/usr/bin/env zsh
-# make-fixtures.sh —— 讲师侧兜底素材生成
+#!/usr/bin/env pwsh
+# make-fixtures.ps1 —— 讲师侧兜底素材生成（Windows 11 + PowerShell 7 版）
 #
-# 用途：第 12、14、15、16 章。造大纲点名要的讲师侧道具：
+# 与 ../macos-zsh/make-fixtures.sh 逻辑等价。用途：第 3、4 章（第三、四次培训）
+# 备课/核对。造大纲点名要的讲师侧道具：
 #   - 脱敏工程案例资料 ×2        （第三次课·项目二，给没带作业的学员）
-#   - 含 5 份资料的项目包 ×1     （第四次课·项目二的循环节点）
-#     └─ 其中 1 份是「故意损坏的文件」
+#   - 含 5 份资料的项目包 ×1     （第四次课·项目二的循环节点），其中 1 份故意损坏
 #   - 三专业设计说明模板 ×3      （第四次课·项目二的多分支）
 #   - 案例卡片字段 Schema        （第三次课·项目二的结构化输出）
 #
-# 依赖：无（zsh 内建 + dd）。可选 pandoc（--pdf 时把 md 转 PDF，更贴近真实课堂输入）
+# 依赖：python3（造/损坏 PDF）。可选 pandoc（-Pdf 时把 md 转 PDF）
 #
 # 用法：
-#   ./make-fixtures.sh --out ../fixtures
-#   ./make-fixtures.sh --out ../fixtures --pdf            # 需 brew install pandoc basictex
-#   ./make-fixtures.sh --out ../fixtures --corrupt garbage # 扣子太宽容时换这个
+#   ./make-fixtures.ps1 -Out ..\fixtures
+#   ./make-fixtures.ps1 -Out ..\fixtures -Pdf
+#   ./make-fixtures.ps1 -Out ..\fixtures -Corrupt garbage    # Dify 太宽容时换这个
 #
-# 关于「损坏文件」的设计（第 15 章验收线的关键道具）：
-#   随机字节做的假 PDF 会被扣子在上传阶段直接拒收 —— 那测不到工作流的异常分支，
-#   流程根本没跑起来。要的是「能上传、解析时炸」。
-#
-#   两种模式：
-#   truncate（默认）：真 PDF 截掉尾部 65%。文件头合法（能过上传的类型校验），
-#       xref/trailer/%%EOF 全丢（规范意义上已损坏）。
-#       ⚠️ 已实测：macOS Quick Look 仍能预览它 —— 宽容解析器会扫描重建 xref。
-#       所以扣子**有可能**也能解析出部分文本。第 15 章首次实操时务必实测，
-#       若扣子照单全收，换 garbage 模式。
-#   garbage：合法 PDF 头 + 随机字节 + 无任何合法对象。任何解析器都救不回来，
-#       但仍能过「是不是 PDF」的类型校验。代价是不如 truncate 真实
-#       （truncate 更像现实里的「传输中断的扫描件」）。
+# 关于「损坏文件」的设计（第 4 章验收线的关键道具）：
+#   随机字节做的假 PDF 会被 Dify 在上传阶段直接拒收 —— 那测不到工作流的异常分支。
+#   要的是「能上传、解析时炸」。
+#   truncate（默认）：真 PDF 截掉尾部 65%，文件头合法、xref/trailer/%%EOF 全丢。
+#   garbage：合法 PDF 头 + 随机字节，任何解析器都救不回来，但仍能过类型校验。
 
-set -euo pipefail
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory)][string]$Out,
+    [switch]$Pdf,
+    [ValidateSet('truncate','garbage')][string]$Corrupt = 'truncate'
+)
 
-OUT=""
-MAKE_PDF=0
-CORRUPT_MODE="truncate"
+$ErrorActionPreference = 'Stop'
+if (-not (Get-Command python3 -ErrorAction SilentlyContinue)) { Write-Error "缺 python3。scoop install python（或 choco install python）"; exit 1 }
 
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --out)     OUT="$2"; shift 2 ;;
-    --pdf)     MAKE_PDF=1; shift ;;
-    --corrupt) CORRUPT_MODE="$2"; shift 2 ;;
-    -h|--help) sed -n '2,34p' "$0"; exit 0 ;;
-    *) print -u2 "未知参数: $1"; exit 1 ;;
-  esac
-done
-[[ "$CORRUPT_MODE" != "truncate" && "$CORRUPT_MODE" != "garbage" ]] && {
-  print -u2 "--corrupt 只能是 truncate 或 garbage"; exit 1; }
-[[ -z "$OUT" ]] && { print -u2 "用法: $0 --out <输出目录> [--pdf]"; exit 1; }
+foreach ($d in 'cases','project-pack','templates','schema') {
+    New-Item -ItemType Directory -Force -Path (Join-Path $Out $d) | Out-Null
+}
+function Write-Utf8($path, $text) { [System.IO.File]::WriteAllText($path, $text, (New-Object System.Text.UTF8Encoding($false))) }
 
-mkdir -p "$OUT"/{cases,project-pack,templates,schema}
+Write-Host "=== 1/4 脱敏工程案例资料 ×2 ==="
 
-print "=== 1/4 脱敏工程案例资料 ×2 ==="
-
-cat > "$OUT/cases/case-01-某科技园研发楼.md" <<'EOF'
+Write-Utf8 (Join-Path $Out "cases\case-01-某科技园研发楼.md") @'
 # 某科技园研发楼项目资料（脱敏样本 01）
 
 ## 项目概况
@@ -82,9 +68,9 @@ cat > "$OUT/cases/case-01-某科技园研发楼.md" <<'EOF'
 
 ## 附图
 （本脱敏样本不含图纸）
-EOF
+'@
 
-cat > "$OUT/cases/case-02-某医院门诊综合楼.md" <<'EOF'
+Write-Utf8 (Join-Path $Out "cases\case-02-某医院门诊综合楼.md") @'
 # 某医院门诊综合楼项目资料（脱敏样本 02）
 
 ## 项目概况
@@ -113,15 +99,14 @@ cat > "$OUT/cases/case-02-某医院门诊综合楼.md" <<'EOF'
 
 ## 附图
 （本脱敏样本不含图纸）
-EOF
+'@
 
-print "  ok: 2 份脱敏案例（cases/）"
+Write-Host "  ok: 2 份脱敏案例（cases/）"
 
-print "=== 2/4 含 5 份资料的项目包（含 1 份损坏件）==="
+Write-Host "=== 2/4 含 5 份资料的项目包（含 1 份损坏件）==="
+$pack = Join-Path $Out "project-pack"
 
-PACK="$OUT/project-pack"
-
-cat > "$PACK/01-项目任务书.md" <<'EOF'
+Write-Utf8 (Join-Path $pack "01-项目任务书.md") @'
 # 某文化中心项目设计任务书（脱敏）
 
 建设单位：某区文化和旅游局（脱敏）
@@ -132,9 +117,9 @@ cat > "$PACK/01-项目任务书.md" <<'EOF'
 限高：36 m
 设计阶段：方案 → 初步设计
 主导专业：建筑
-EOF
+'@
 
-cat > "$PACK/02-建筑设计条件.md" <<'EOF'
+Write-Utf8 (Join-Path $pack "02-建筑设计条件.md") @'
 # 建筑专业设计条件
 
 - 抗震设防烈度：7 度（0.10g），设计地震分组第二组
@@ -143,9 +128,9 @@ cat > "$PACK/02-建筑设计条件.md" <<'EOF'
 - 剧场部分按人员密集场所设计，疏散按 GB 50016 及 JGJ 57 执行
 - 图书馆书库荷载按 12 kN/m² 取值
 - 绿建目标：二星级
-EOF
+'@
 
-cat > "$PACK/03-结构设计条件.md" <<'EOF'
+Write-Utf8 (Join-Path $pack "03-结构设计条件.md") @'
 # 结构专业设计条件
 
 - 结构体系：剧场部分大跨钢结构（最大跨度 36 m），图书馆及展厅部分框架-剪力墙
@@ -153,9 +138,9 @@ cat > "$PACK/03-结构设计条件.md" <<'EOF'
 - 地下水位：埋深约 2.1 m，需考虑抗浮
 - 混凝土强度等级：C30–C40
 - 钢材：Q355B
-EOF
+'@
 
-cat > "$PACK/04-机电设计条件.md" <<'EOF'
+Write-Utf8 (Join-Path $pack "04-机电设计条件.md") @'
 # 机电专业设计条件
 
 - 空调冷热源：地源热泵 + 冷水机组调峰
@@ -163,86 +148,60 @@ cat > "$PACK/04-机电设计条件.md" <<'EOF'
 - 供电负荷等级：剧场舞台照明及消防负荷为一级，其余二级
 - 消防：全楼设自动喷水灭火系统，剧场舞台设雨淋系统
 - 智能化：设 BA 系统，预留智慧图书馆接口
-EOF
+'@
 
-# ---- 损坏件 ----
-# 先用一份合法 PDF 打底。优先借用系统自带 PDF；没有就用 zsh 手搓一个最小合法 PDF。
-SEED_PDF="$PACK/.seed.pdf"
-FOUND=""
-for cand in \
-  /System/Library/Automator/*.action/Contents/Resources/*.pdf(N) \
-  /Library/Desktop\ Pictures/*.pdf(N) \
-  /System/Library/Frameworks/**/*.pdf(N[1]) ; do
-  [[ -f "$cand" ]] && { FOUND="$cand"; break }
-done
+# ---- 损坏件：python 手搓最小合法 PDF 作种子，再按模式破坏 ----
+$broken = Join-Path $pack "05-历史图纸扫描件.pdf"
+$py = @'
+import sys, os
+mode, path = sys.argv[1], sys.argv[2]
 
-if [[ -n "$FOUND" ]] && [[ $(stat -f%z "$FOUND") -gt 20000 ]]; then
-  cp "$FOUND" "$SEED_PDF"
-  print "  种子 PDF：借用系统文件 ${FOUND:t}"
-else
-  # 手搓最小合法 PDF（含 xref，能被正常打开）
-  python3 - "$SEED_PDF" <<'PY'
-import sys, zlib
-path = sys.argv[1]
-text = b'BT /F1 12 Tf 72 720 Td (Design Note - fixture seed) Tj ET\n' * 400
-objs = [
-    b'<< /Type /Catalog /Pages 2 0 R >>',
-    b'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
-    b'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R '
-    b'/Resources << /Font << /F1 5 0 R >> >> >>',
-    b'<< /Length %d >>\nstream\n' % len(text) + text + b'\nendstream',
-    b'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
-]
-out, offsets = b'%PDF-1.4\n', []
-for i, o in enumerate(objs, 1):
-    offsets.append(len(out))
-    out += b'%d 0 obj\n' % i + o + b'\nendobj\n'
-xref = len(out)
-out += b'xref\n0 %d\n0000000000 65535 f \n' % (len(objs) + 1)
-for off in offsets:
-    out += b'%010d 00000 n \n' % off
-out += b'trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n' % (len(objs) + 1, xref)
-open(path, 'wb').write(out)
-PY
-  print "  种子 PDF：手搓生成"
-fi
+def minimal_pdf():
+    text = b'BT /F1 12 Tf 72 720 Td (Design Note - fixture seed) Tj ET\n' * 400
+    objs = [
+        b'<< /Type /Catalog /Pages 2 0 R >>',
+        b'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+        b'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R '
+        b'/Resources << /Font << /F1 5 0 R >> >> >>',
+        b'<< /Length %d >>\nstream\n' % len(text) + text + b'\nendstream',
+        b'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+    ]
+    out, offsets = b'%PDF-1.4\n', []
+    for i, o in enumerate(objs, 1):
+        offsets.append(len(out))
+        out += b'%d 0 obj\n' % i + o + b'\nendobj\n'
+    xref = len(out)
+    out += b'xref\n0 %d\n0000000000 65535 f \n' % (len(objs) + 1)
+    for off in offsets:
+        out += b'%010d 00000 n \n' % off
+    out += b'trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n' % (len(objs) + 1, xref)
+    return out
 
-SEED_SIZE=$(stat -f%z "$SEED_PDF")
-BROKEN="$PACK/05-历史图纸扫描件.pdf"
+seed = minimal_pdf()
+if mode == 'truncate':
+    keep = len(seed) * 35 // 100     # 留头部 35%，砍掉含 xref/trailer/%%EOF 的尾部
+    open(path, 'wb').write(seed[:keep])
+    print(f'      模式 truncate：原始 {len(seed)}B → {keep}B')
+else:
+    open(path, 'wb').write(b'%PDF-1.4\n%\xe2\xe3\xcf\xd3\n' + os.urandom(24000))
+    print('      模式 garbage：合法头 + 24KB 随机字节')
 
-if [[ "$CORRUPT_MODE" == "truncate" ]]; then
-  KEEP=$(( SEED_SIZE * 35 / 100 ))   # 留头部 35%，砍掉含 xref/trailer/%%EOF 的尾部
-  dd if="$SEED_PDF" of="$BROKEN" bs=1 count=$KEEP 2>/dev/null
-  print "  ok: 5 份资料（project-pack/），其中 05-历史图纸扫描件.pdf 为损坏件"
-  print "      模式 truncate：原始 ${SEED_SIZE}B → ${KEEP}B"
-else
-  python3 - "$BROKEN" <<'PY'
-import os, sys
-# 合法头（过类型校验）+ 随机字节（无任何可解析对象）+ 无 xref/trailer/EOF
-open(sys.argv[1], 'wb').write(b'%PDF-1.4\n%\xe2\xe3\xcf\xd3\n' + os.urandom(24000))
-PY
-  print "  ok: 5 份资料（project-pack/），其中 05-历史图纸扫描件.pdf 为损坏件"
-  print "      模式 garbage：合法头 + 24KB 随机字节"
-fi
-rm -f "$SEED_PDF"
-
-# 结构校验（不用 qlmanage —— 它是 GUI 工具，会挂住，且会重建 xref 给你假信号）
-python3 - "$BROKEN" <<'PY'
-import sys
-d = open(sys.argv[1], 'rb').read()
+# 结构校验
+d = open(path, 'rb').read()
 ok = d[:5] == b'%PDF-'
 bad = not any(m in d for m in (b'xref', b'trailer', b'%%EOF'))
 print(f'      校验：PDF头={"合法" if ok else "非法"}  xref/trailer/EOF={"已丢" if bad else "仍在（不够坏！）"}')
 if not (ok and bad):
     print('      !! 损坏件不合格 —— 上传或异常分支会测不出来', file=sys.stderr)
-PY
-print "      ⚠️ 最终验证只能在扣子上做（第 15 章）：能上传、解析失败 = 合格。"
-print "         若扣子照单全收解析出了文本，重跑：--corrupt garbage"
+'@
+$py | & python3 - $Corrupt $broken
+Write-Host "  ok: 5 份资料（project-pack/），其中 05-历史图纸扫描件.pdf 为损坏件"
+Write-Host "      ⚠️ 最终验证只能在 Dify 上做（第 4 章）：能上传、解析失败 = 合格。"
+Write-Host "         若 Dify 照单全收解析出了文本，重跑：-Corrupt garbage"
 
-print "=== 3/4 三专业设计说明模板 ==="
-
-for spec in 建筑 结构 机电; do
-  cat > "$OUT/templates/设计说明模板-${spec}.md" <<EOF
+Write-Host "=== 3/4 三专业设计说明模板 ==="
+foreach ($spec in '建筑','结构','机电') {
+    $tpl = @"
 # ${spec}专业设计说明模板（通用兜底版）
 
 > 用途：第四次课·项目二「多分支」节点的模板载荷。
@@ -277,17 +236,17 @@ for spec in 建筑 结构 机电; do
 | 检查项 | 依据条文 | 结论 |
 |---|---|---|
 | {{检查项}} | {{条文号}} | {{符合/不符合/待确认}} |
-EOF
-done
-print "  ok: 3 份模板（templates/）"
+"@
+    Write-Utf8 (Join-Path $Out "templates\设计说明模板-${spec}.md") $tpl
+}
+Write-Host "  ok: 3 份模板（templates/）"
 
-print "=== 4/4 案例卡片 Schema ==="
-
-cat > "$OUT/schema/case-card.schema.json" <<'EOF'
+Write-Host "=== 4/4 案例卡片 Schema ==="
+Write-Utf8 (Join-Path $Out "schema\case-card.schema.json") @'
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "工程案例卡片",
-  "description": "第三次课·项目二的结构化输出契约。字段与飞书多维表格列一一对应。",
+  "description": "第三次课·项目二的结构化输出契约。字段与院内结构化案例表（如多维表格）列一一对应。",
   "type": "object",
   "properties": {
     "project_name":   { "type": "string", "description": "项目名称。资料里没有则留空字符串，不许推测。" },
@@ -305,9 +264,9 @@ cat > "$OUT/schema/case-card.schema.json" <<'EOF'
   },
   "required": ["project_name", "location", "scale", "discipline", "missing_fields"]
 }
-EOF
+'@
 
-cat > "$OUT/schema/case-card.prompt.md" <<'EOF'
+Write-Utf8 (Join-Path $Out "schema\case-card.prompt.md") @'
 # 案例收集智能体 —— 结构化输出提示词片段
 
 严格按下列 JSON Schema 输出，不要输出任何 JSON 以外的内容（不要前言、不要 markdown 代码块围栏）。
@@ -321,28 +280,30 @@ cat > "$OUT/schema/case-card.prompt.md" <<'EOF'
 
 Schema：
 （把 case-card.schema.json 的内容粘在这里）
-EOF
+'@
+Write-Host "  ok: Schema + 提示词片段（schema/）"
 
-print "  ok: Schema + 提示词片段（schema/）"
+if ($Pdf) {
+    if (Get-Command pandoc -ErrorAction SilentlyContinue) {
+        Write-Host "=== 附加：md → PDF ==="
+        $mds = @(Get-ChildItem (Join-Path $Out "cases") -Filter *.md) +
+               @(Get-ChildItem $pack -Filter "0[1-4]*.md")
+        foreach ($md in $mds) {
+            $pdfOut = [System.IO.Path]::ChangeExtension($md.FullName, ".pdf")
+            & pandoc $md.FullName -o $pdfOut --pdf-engine=xelatex -V CJKmainfont="Microsoft YaHei" 2>$null
+            if ($LASTEXITCODE -eq 0) { Write-Host "  ok: $($md.BaseName).pdf" }
+            else { Write-Warning "  !! 转换失败（缺 xelatex？装 MiKTeX）: $($md.Name)" }
+        }
+    } else {
+        Write-Warning "!! 没装 pandoc，跳过 PDF 转换。scoop install pandoc"
+    }
+}
 
-if [[ $MAKE_PDF -eq 1 ]]; then
-  if command -v pandoc >/dev/null; then
-    print "=== 附加：md → PDF ==="
-    for md in "$OUT"/cases/*.md "$PACK"/0[1-4]*.md; do
-      pandoc "$md" -o "${md:r}.pdf" --pdf-engine=xelatex \
-        -V CJKmainfont="PingFang SC" 2>/dev/null && print "  ok: ${md:t:r}.pdf" \
-        || print -u2 "  !! 转换失败（缺 xelatex？跑 brew install basictex）: ${md:t}"
-    done
-  else
-    print -u2 "!! 没装 pandoc，跳过 PDF 转换。brew install pandoc basictex"
-  fi
-fi
-
-print ""
-print "兜底素材就绪: $OUT"
-print ""
-print "清单："
-print "  cases/         → 第 12 章（案例收集智能体的输入，给没带作业的学员）"
-print "  project-pack/  → 第 15 章（循环节点的 5 份资料，含 1 份损坏件）"
-print "  templates/     → 第 15 章（多分支的三专业模板）"
-print "  schema/        → 第 11 章（案例卡片结构化输出契约）"
+Write-Host ""
+Write-Host "兜底素材就绪: $Out"
+Write-Host ""
+Write-Host "清单："
+Write-Host "  cases/         → 第 3 章（案例收集智能体演示的输入，给没带作业的学员）"
+Write-Host "  project-pack/  → 第 4 章（循环节点的 5 份资料，含 1 份损坏件）"
+Write-Host "  templates/     → 第 4 章（多分支的三专业模板）"
+Write-Host "  schema/        → 第 3 章（案例卡片结构化输出契约）"

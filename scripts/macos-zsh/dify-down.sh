@@ -43,7 +43,7 @@ fi
 
 if [[ $PURGE -eq 1 ]]; then
   print "!! --purge 会删掉 Dify 的所有数据卷：应用、知识库、审计日志全没。"
-  print "   你在第 12 章建的演示知识库也会没。确定？输 yes 继续："
+  print "   你在第 2 章建的演示知识库也会没。确定？输 yes 继续："
   read -r confirm
   [[ "$confirm" != "yes" ]] && { print "已取消"; exit 0; }
   docker compose -f "$COMPOSE" down -v

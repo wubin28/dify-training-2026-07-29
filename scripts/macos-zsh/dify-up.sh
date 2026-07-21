@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 # dify-up.sh —— Dify 私有化演示环境起服务（macOS + Docker Desktop）
 #
-# 用途：第 12 章（起得来、能演示）、第 16 章（演版本控制/审计日志/RBAC）。
+# 用途：第 2 章（起得来、能演示知识库）、第 4 章（演版本控制/审计日志/RBAC）。
 #
 # 定位说明：这套环境是**讲师侧演示用**。学员在 Windows 11 上不部署 Dify ——
 # 大纲里 Dify 是「讲授 + 演示」，不是学员动手环节。你在 macOS 上起一份，
@@ -85,7 +85,7 @@ if [[ -n "$SNAPSHOT" ]]; then
   fi
   cp "$COMPOSE_DIR/.env" "$SNAP_DIR/.env.bak" 2>/dev/null || true
   print "  快照位置: $SNAP_DIR"
-  print "  （第 16 章演版本控制/回滚前先打快照，演砸了能回来）"
+  print "  （第 4 章演版本控制/回滚前先打快照，演砸了能回来）"
 else
   print "  跳过（要打快照加 --snapshot <名字>）"
 fi
@@ -104,7 +104,7 @@ for i in {1..40}; do
     print ""
     print "访问: http://localhost"
     print "首次打开会让你建管理员账号 —— 备课时建两个账号，"
-    print "第 16 章演 RBAC 要用（一个 owner、一个 normal member）。"
+    print "第 4 章演 RBAC 要用（一个 owner、一个 normal member）。"
     print ""
     print "日志: docker compose -f $COMPOSE_DIR/docker-compose.yaml logs -f api"
     print "停服: $SCRIPT_DIR/dify-down.sh"

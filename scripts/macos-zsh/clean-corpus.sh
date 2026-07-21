@@ -1,8 +1,8 @@
 #!/usr/bin/env zsh
 # clean-corpus.sh —— 公开国标 PDF → 干净可入库文本
 #
-# 用途：第 6、7 章。把讲师侧兜底语料（公开国标/图集 PDF）洗成扣子/Dify
-#      能正确切分的 md 片段。
+# 用途：第 2 章（第二次培训·知识库）备课。把讲师侧兜底语料
+#      （公开国标/图集 PDF）洗成 Dify 能正确切分的 md 片段。
 #
 # 依赖：brew install poppler
 #
@@ -10,8 +10,8 @@
 #   ./clean-corpus.sh --in ../raw/pdf --out ../corpus/by-article --by-article
 #   ./clean-corpus.sh --in ../raw/pdf --out ../corpus/by-500  --by-chars 500
 #
-# 两种切分粒度是第 8 章「切分粒度 A/B 实验」的两个实验组。
-# 同一批 PDF 跑两次，得到两个语料目录，分别灌进两个知识库对比召回质量。
+# 两种切分粒度是第 2 章「切分粒度 A/B 实验」的两个实验组。
+# 同一批 PDF 跑两次，得到两个语料目录，分别灌进两个 Dify 知识库对比召回质量。
 
 set -euo pipefail
 
@@ -117,7 +117,7 @@ for txt in sorted(pathlib.Path(work).glob('*.txt')):
         if not text.strip():
             continue
         # 每个切片自带出处头 —— 这是「答案必须能点回原文」的技术前提。
-        # 扣子召回时会把整个切片喂给模型，出处头跟着一起进上下文。
+        # Dify 召回时会把整个切片喂给模型，出处头跟着一起进上下文。
         fm = f'> 出处：{src} 第 {cid} 条\n\n' if mode == 'by-article' else f'> 出处：{src} 片段 {cid}\n\n'
         (dest / f'{cid}.md').write_text(fm + text.strip() + '\n', encoding='utf-8')
         total += 1
@@ -128,5 +128,5 @@ PY
 
 print ""
 print "语料就绪: $OUT_DIR"
-print "下一步：把整个目录拖进扣子知识库（第 7 章 步骤 3）"
-print "提示：条文切分模式下每片自带「出处」行，别在扣子里再开自动摘要，会把出处行吃掉。"
+print "下一步：把整个目录拖进 Dify 知识库（第 2 章 建知识库步骤）"
+print "提示：条文切分模式下每片自带「出处」行，别在 Dify 里再开自动摘要，会把出处行吃掉。"
