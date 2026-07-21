@@ -7,6 +7,10 @@
 #   ./dify-down.ps1                      # 停容器，数据保留
 #   ./dify-down.ps1 -Purge               # 停容器 + 删数据卷（下次是全新实例）
 #   ./dify-down.ps1 -Restore <快照名>    # 停服务 → 恢复快照 → 重起
+#
+# ⚠️ 版本一致性：-Restore 用 pg_dump 逻辑还原，只在**同版本**内安全。
+#   1.14.2 时期打的快照别往 1.11.2 上还原（schema 不通用，会脏库或起不来）。
+#   降级到 1.11.2 后，重新用 dify-up.ps1 -Snapshot 打新的 1.11.2 快照。
 
 [CmdletBinding()]
 param(

@@ -5,6 +5,10 @@
 #   ./dify-down.sh            # 停容器，数据保留
 #   ./dify-down.sh --purge    # 停容器 + 删数据卷（下次是全新实例）
 #   ./dify-down.sh --restore <快照名>   # 停服务 → 恢复快照 → 重起
+#
+# ⚠️ 版本一致性：--restore 用 pg_dump 逻辑还原，只在**同版本**内安全。
+#   1.14.2 时期打的快照别往 1.11.2 上还原（schema 不通用，会脏库或起不来）。
+#   降级到 1.11.2 后，请重新用 dify-up.sh --snapshot 打新的 1.11.2 快照。
 
 set -euo pipefail
 

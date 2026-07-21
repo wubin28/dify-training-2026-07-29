@@ -14,14 +14,17 @@
 #   ./dify-up.sh --snapshot before-versioning-demo   # 起服务前先打快照
 #   ./dify-down.sh                  # 停服务
 #
-# 【?Dify:版本】按 v1.14.x 写就（大纲引用的版本）。若官方仓库结构变化，
-#   回填实际的 compose 文件路径与 .env 变量名。
+# 【?Dify:版本】钉 v1.11.2 —— 与学员院内版本对齐（讲师本地降级后一致，避免 UI 对不上）。
+#   注意：1.11.2 的 docker/.env.example 是单文件结构（1.14.1+ 才把 env 拆进
+#   docker/envs/**）。本脚本用 cp .env.example .env，两版都适用，无需改。
+#   若要临时切回 1.14.2 备课，加 --version 1.14.2 即可（但两版数据卷 schema 不通用，
+#   切版本前先 dify-down.sh --purge 清卷，别指望原地降级）。
 
 set -euo pipefail
 
 SCRIPT_DIR=${0:A:h}
 DIFY_HOME="${DIFY_HOME:-$HOME/dify-demo}"
-DIFY_VERSION="${DIFY_VERSION:-1.14.2}"
+DIFY_VERSION="${DIFY_VERSION:-1.11.2}"
 SNAPSHOT=""
 # 固定 project 名，避免跟同名目录（如 README 里另一个 dify/docker）的 stack 撞成一个 project
 DIFY_PROJECT="${DIFY_PROJECT:-dify-demo}"

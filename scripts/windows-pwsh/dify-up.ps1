@@ -24,7 +24,9 @@ param(
 $ErrorActionPreference = 'Stop'
 
 if (-not $DifyHome) { $DifyHome = if ($env:DIFY_HOME) { $env:DIFY_HOME } else { Join-Path $env:USERPROFILE "dify-demo" } }
-if (-not $Version)  { $Version  = if ($env:DIFY_VERSION) { $env:DIFY_VERSION } else { "1.14.2" } }
+# 【?Dify:版本】钉 1.11.2 —— 与学员院内版本对齐。两版数据卷 schema 不通用，
+# 切版本前先 dify-down.ps1 -Purge 清卷，别指望原地降级。备课切回加 -Version 1.14.2。
+if (-not $Version)  { $Version  = if ($env:DIFY_VERSION) { $env:DIFY_VERSION } else { "1.11.2" } }
 $scriptDir = $PSScriptRoot
 
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) { Write-Error "没装 Docker。装 Docker Desktop for Windows。"; exit 1 }
