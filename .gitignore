@@ -1,0 +1,16 @@
+# PDF source files
+*.pdf
+raw/pdf/
+
+# Intermediate/generated corpus artifacts
+corpus/
+
+# OS files
+.DS_Store
+
+# Editor/IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
