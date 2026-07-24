@@ -68,10 +68,6 @@ python --version                                     # 显示 Python 3.x.x = 真
 - 报错／无输出／**弹出「Microsoft Store」页面** → 没真装（那是 Windows 的 Store 别名桩，不是真 python），继续第 1 步。
 - 注：Windows 上命令是 `python`，不是 `python3`（`python3` 常无法识别）。
 
-**第 0.1 步 · 安装vscode以便查看和编辑源代码**
-
-用浏览器访问[https://code.visualstudio.com/download](https://code.visualstudio.com/download)下载并安装vscode，安装完成后可以用vscode打开和编辑源代码文件。
-
 **第 1 步 · 判断是否已装 scoop（仅当 python 没装时才做）**
 
 ```powershell
@@ -131,6 +127,10 @@ where.exe python
 - **winget 安装** → 通常在 `C:\Program Files\` 或 `C:\Users\用户名\AppData\Local\Microsoft\WinGet\`
 - **官方安装程序** → 通常在 `C:\Program Files\Python311\` 或 `C:\Users\用户名\AppData\Local\Programs\Python\`
 
+
+**第 2.2 步 · 安装vscode以便查看和编辑源代码**
+
+用浏览器访问[https://code.visualstudio.com/download](https://code.visualstudio.com/download)下载并安装vscode（Windows 11一般选择“x64”下载并安装），安装完成后可以用vscode打开和编辑源代码文件。安装后，如果能在Windows里通过搜索应用找到VSCode，并打开，那么就表明安装成功。
 
 **第 3 步 · 装语料/素材工具（原有内容，保留）**
 
