@@ -38,21 +38,17 @@
 ### 0.3 scripts 目录结构
 
 ```
-katas\dify-training-2026-07-29\      # 项目根
+dify-training-2026-07-29\    # 项目根
 ├── scripts\
-│   ├── questions.yaml            # 平台无关验收题库（留在根，runner 共用）
-│   ├── split-spec.py            # markdown 规范切分器
-│   └── windows-pwsh\            # Windows 11 + PowerShell 7
-│       ├── clean-corpus.ps1
-│       ├── make-fixtures.ps1
-│       ├── run-eval.ps1
-│       ├── dify-up.ps1           # 本地起 Dify（现场用院内 Dify，通常不需要）
-│       └── dify-down.ps1
-├── raw\pdf        # 公开国标 PDF 原件
-├── corpus\        # 切分输出（by-article / by-500）
-├── fixtures\      # make-fixtures 输出
-├── eval\          # run-eval / 召回对比输出
-└── catchup-packs\ # 追赶包导出件
+│   ├── questions.yaml       # 平台无关“规范问答助手”验收题库
+│   ├── split-spec.py        # 切分 markdown 格式的规范的 python 脚本
+│   └── windows-pwsh\        # Windows 11 + PowerShell 7
+│       └── clean-corpus.ps1 # 切分 pdf 格式的规范的 powershell 脚本
+├── raw\
+│   ├── pdf\                 # 原生文字版公开国标 PDF 格式原件
+│   └── specs-Q-SEMEDI-2025-v1\ 
+│       └── specs.md         # Markdown 格式内部防火设计规范
+└── corpus\                  # 切分输出（by-article / by-500）
 ```
 
 > **★ 路径最易踩的坑**：`cd` 进 `scripts\windows-pwsh\` 后，当前目录到项目根是 `..\..`。所以命令行输出目标写 `..\..\corpus`、`..\..\fixtures`、`..\..\eval`、`..\..\raw\pdf`。脚本内部对 `questions.yaml` 的引用已是 `..\questions.yaml`（脚本自己处理）。
