@@ -1,9 +1,9 @@
 # PDF source files
-*.pdf
-raw/pdf/
+# *.pdf
+# raw/pdf/
 
 # Intermediate/generated corpus artifacts
-corpus/
+# corpus/
 
 # OS files
 .DS_Store
